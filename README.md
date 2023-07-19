@@ -1,3 +1,14 @@
+* To use
+```
+conda env create -f environment.yml
+conda activate myenv
+python dog_breed_identifier.py -i <name-of-image-file>
+```
+For help:
+```
+python dog_breed_identifier.py -h
+```
+
 # dog-vision
 
 # 🐶 End-to-end Multi-class Dog Breed Classification
