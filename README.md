@@ -1799,4 +1799,191 @@ To get the data in this format, we'll:
 * Add data (the prediction probabilities) to each of the dog breeds
 * Export the data frame as a CSV and submit to Kaggle
 
+## Method 1
+
+```
+# Get list of indexes
+index = [os.path.splitext(fname.split(os.sep)[-1])[0] for fname in test_filenames]
+# Create DataFrame with ids as index column and the unique breeds as the rest of columns
+test_frame = pd.DataFrame(test_predictions, columns=unique_breeds) # could also pass index parameter as index
+# Rename the index column
+test_frame.insert(0, column="id", value=index)
+```
+
+```
+def test_dog_predictor(predictions, index=0):
+    print(predictions[index])
+    print(f"Max value (probability of prediction): {np.max(predictions[index])}")
+    print(f"Sum: {np.sum(predictions[index])}")
+    print(f"Max index: {np.argmax(predictions[index])}")
+    print(f"Predicted label: {unique_breeds[np.argmax(predictions[index])]}")
+```
+
+** Output:
+```
+Output exceeds the size limit. Open the full output data in a text editor
+[3.70405475e-13 1.82821342e-13 1.79593947e-17 5.51879605e-16
+ 1.58403987e-14 2.05079267e-13 2.12096437e-19 1.50949837e-15
+ 1.10101599e-15 1.52785055e-12 1.71463318e-16 2.36957345e-13
+ 3.41687297e-14 1.26462009e-11 1.00171744e-16 2.79099474e-14
+ 5.48067883e-15 2.15123075e-16 1.21836596e-13 8.18611021e-13
+ 8.73996851e-17 5.07928321e-14 2.02888235e-15 8.56811519e-16
+ 6.62471615e-16 4.37054960e-13 1.31725090e-15 1.25862623e-18
+ 5.91039490e-18 1.88434107e-13 1.20460748e-14 6.81499263e-14
+ 1.22937413e-14 2.73303602e-11 2.74815009e-17 7.45552052e-19
+ 1.14935297e-13 5.08659498e-17 4.93157185e-14 2.00698735e-10
+ 1.53089835e-13 8.87060019e-16 1.22188416e-14 1.29295556e-16
+ 9.09303286e-14 4.65885941e-11 1.58097022e-14 1.66825931e-13
+ 3.10646149e-14 1.33512803e-13 5.00556280e-15 7.74884226e-13
+ 9.88752700e-13 5.75200963e-16 2.03526313e-14 1.35557366e-17
+ 5.00362909e-17 7.01411731e-16 1.13995142e-14 3.20198670e-17
+ 1.19309620e-15 9.99999881e-01 5.57769968e-15 1.18864358e-16
+ 1.70953992e-15 1.03118009e-16 4.97043486e-16 3.97851240e-13
+ 1.34267659e-17 3.26155817e-15 1.29743384e-13 4.17742907e-13
+ 1.70241936e-16 3.85527131e-15 1.52122723e-15 1.97068618e-17
+ 2.27901044e-16 3.79344552e-15 1.25265521e-15 5.32936132e-18
+ 1.55425583e-17 1.92873890e-18 6.80898340e-16 5.44809813e-15
+ 2.34670009e-11 1.13929687e-07 6.69871242e-17 1.43483194e-11
+ 1.54143666e-14 1.59395107e-17 5.81300289e-15 5.14082719e-16
+ 4.03496464e-13 2.24141831e-13 5.73432428e-14 1.00028702e-13
+ 1.37257414e-16 5.99132820e-16 2.82599855e-12 6.90194152e-11
+...
+Max value (probability of prediction): 0.9999998807907104
+Sum: 1.0
+Max index: 61
+Predicted label: japanese_spaniel
+```
+
+## Method 2
+
+Create a pandas dataframe
+```
+preds_df = pd.DataFrame(columns=["id"] + list(unique_breeds))
+preds_df.head()
+```
+
+Append test image IDs to predictions DataFrame
+```
+test_ids = [os.path.splitext(path)[0] for path in os.listdir(test_path)]
+preds_df["id"] = test_ids
+```
+
+Add the prediction probabilities to each dog breed column
+```
+preds_df[list(unique_breeds)] = test_predictions
+preds_df.head()
+```
+
+```
+preds_df.to_csv("full_model_prediction_submission_1_mobilenetV2.csv", index=False)
+```
+
+### Making predictions on custom images, we'll:
+* Get the file paths
+* Turn the filepaths into data batches using `create_data_batches`. And since our custom images won't have labels, we set the `test_data` parameter to `True`
+* Pass the custom image data batch to our moedls predict() method
+* Convert the prediction probabilities to prediction labels
+* Compre the predicted labels to the custom images
+
+```
+# The the custom image filepaths
+custom_path="custom"
+custom_image_paths = [f"{custom_path}{os.sep}{fname}" for fname in os.listdir(custom_path)]
+
+# Obtain the custom data batches for predictions
+custom_data = create_data_batches(custom_image_paths, test_data=True)
+```
+
+Predict the outcomes
+```
+custom_predictions = full_model.predict(custom_data)
+test_dog_predictor(custom_predictions,1)
+```
+
+** Output:
+```
+Output exceeds the size limit. Open the full output data in a text editor
+[2.61113103e-10 4.46699708e-12 2.09415649e-14 1.18806050e-12
+ 2.94328906e-12 2.04634183e-12 9.18295311e-16 1.20688656e-13
+ 1.20810886e-14 8.81618488e-15 4.07395309e-13 3.84408144e-10
+ 3.71379902e-14 1.23522321e-11 4.08678300e-11 5.32430437e-12
+ 6.84644386e-09 1.58391895e-13 8.03790715e-11 3.40475288e-13
+ 1.00473996e-09 9.46843190e-13 3.37036476e-14 2.17444465e-10
+ 2.25071125e-11 9.64901830e-08 1.39678062e-16 2.38640585e-15
+ 7.92375748e-11 8.89893323e-15 2.58690296e-08 2.15272904e-11
+ 1.21954953e-08 1.23798936e-08 2.33408309e-06 4.88666703e-12
+ 2.19114824e-10 2.15896067e-13 1.66320015e-13 5.91927386e-13
+ 2.68606821e-11 9.47542400e-09 2.36930202e-12 2.03298953e-13
+ 7.17631610e-06 7.70324397e-13 2.49525140e-12 1.96898886e-11
+ 1.91409200e-08 1.71625072e-06 3.46353417e-08 2.66109509e-12
+ 4.43440618e-09 1.66225679e-11 2.36526421e-09 3.56284419e-14
+ 1.25162519e-11 6.39630425e-14 9.81232109e-12 1.06620420e-12
+ 7.86487495e-17 5.06489945e-12 7.42130424e-13 1.77021505e-12
+ 2.36692380e-14 6.75318690e-11 2.50384624e-09 2.93140928e-10
+ 5.53604607e-14 5.06278539e-08 9.63056232e-11 1.13178973e-10
+ 1.74484830e-13 9.99568843e-15 8.58421895e-13 3.01650713e-13
+ 7.99090611e-14 9.37729529e-16 9.99987841e-01 2.03892689e-13
+ 1.29269848e-12 1.17847164e-11 9.26263623e-13 1.88969596e-09
+ 2.00611554e-12 5.48742336e-11 3.65312191e-13 1.12087726e-12
+ 1.02718346e-11 1.28771028e-12 2.37472902e-10 8.81317727e-11
+ 2.42304274e-08 7.26359424e-12 3.93209380e-12 1.00671771e-09
+ 1.77755963e-13 1.22191396e-10 2.98532412e-13 3.16787720e-12
+...
+Max value (probability of prediction): 0.9999878406524658
+Sum: 1.0
+Max index: 78
+Predicted label: newfoundland
+```
+
+```
+custom_image_paths[1]
+```
+** Output:
+```
+'custom\\newfoundland_dog_pictures.jpg'
+```
+
+```
+custom_pred_label = [get_pred_label(custom_predictions[i]) for i in range(len(custom_predictions))]
+custom_pred_label
+```
+** Output
+```
+['golden_retriever', 'newfoundland', 'border_collie']
+```
+
+Get custom images (our unbatchify()) function won't work since there arent labels... maybe we could fix this later)
+```
+custom_images = []
+# loop through unbatched data
+for image in custom_data.unbatch().as_numpy_iterator():
+    custom_images.append(image)
+```
+
+Check custom image predictions
+```
+plt.figure(figsize=(10,10))
+for i, image in enumerate(custom_images):
+    plt.subplot(1, 3, i+1)
+    plt.xticks([])
+    plt.yticks([])
+    plt.title(custom_pred_label[i])
+    plt.imshow(image)
+```
+
+![image](https://github.com/allansanyaz/dog-vision/assets/87567534/18d91466-4a83-41f0-803d-991157643b49)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
